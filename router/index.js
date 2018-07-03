@@ -1,22 +1,24 @@
+'use strict'
+
 let router = require('express').Router();
 let errors = require('http-errors');
 let db = require('../models')
-let AccessTokenRepositories = require('../repositories/access_tokenRepositories')
+let AccessTokenRepositories = require('../repositories/access_tokenRepositories');
 
-router.use('/change-password', async (req, res, next) => {
+router.use('/', async (req, res, next) => {
     let ACCESS_TOKEN = req.header("ACCESS_TOKEN");
 
-    let TokenInfo = await AccessTokenRepositories.getInstance().findOne({
+    let tokenInfo = await AccessTokenRepositories.getInstance().findOne({
         where: {
             access_token: ACCESS_TOKEN
         }
     });
-    if (!TokenInfo) {
+    if (!tokenInfo) {
         let err = new errors(404, "Can not access!");
         next(err);
     }
 
-    if (!req.body.userId || req.body.userId == TokenInfo.dataValues.userid) {
+    if (tokenInfo.is_revoked && (!req.body.userId || req.body.userId == tokenInfo.dataValues.userid)) {
         next();
     }
     else {
@@ -26,6 +28,6 @@ router.use('/change-password', async (req, res, next) => {
 })
 
 router.get('/change-password', require('./api/change_password'));
-router.put('/change-password', require('./api/change_password'))
+router.put('/change-password', require('./api/change_password'));
 
 module.exports = router;
